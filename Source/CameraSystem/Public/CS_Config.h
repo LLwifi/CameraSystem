@@ -7,6 +7,8 @@
 #include <Engine/DataTable.h>
 #include "CS_Config.generated.h"
 
+class UCS_CameraModifier;
+
 /**
  * 编辑器下的通用配置
  */
@@ -25,10 +27,17 @@ public:
 
 public:
 	//相机事件数据表
-	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "CameraEvent")
 	TSoftObjectPtr<UDataTable> CameraEventInfoDataTable;
 
-	//震动的缩放默认值
-	UPROPERTY(Config, EditAnywhere, BlueprintReadWrite)
+	//相机抖动（CameraShake）的缩放默认值
+	UPROPERTY(Config, EditAnywhere, BlueprintReadWrite, Category = "CameraShake")
 	float DefaultCameraShakeScale = 1.0f;
+
+	//相机后期的混入混出间隔
+	UPROPERTY(Config, EditAnywhere, BlueprintReadWrite, Category = "CameraPost")
+	float CameraPostBlendInterval = 0.05f;
+	//相机后期的默认效果类
+	UPROPERTY(Config, EditAnywhere, BlueprintReadWrite, Category = "CameraPost")
+	TSoftClassPtr<UCS_CameraModifier> DefaultCameraPostClass;
 };

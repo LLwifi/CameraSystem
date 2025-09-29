@@ -5,44 +5,10 @@
 #include "CS_StructAndEnum.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameStateBase.h"
+#include "CameraModifier/CS_CameraModifier.h"
+#include "Kismet/KismetMathLibrary.h"
 
-void UCS_WorldSubsystem::PushCameraEvent(FCS_CameraEventHandle CameraEventHandle, bool bIsOverridePushInfo, FCS_PushCameraEventInfo PushCameraEventInfo)
-{
-	UDataTable* CameraEventInfoDataTable = UCS_Config::GetInstance()->CameraEventInfoDataTable.LoadSynchronous();
-	if (CameraEventInfoDataTable)
-	{
-		FCS_CameraEventInfo* CameraEventInfo = CameraEventInfoDataTable->FindRow<FCS_CameraEventInfo>(CameraEventHandle.RowName,TEXT(""));
-		if (CameraEventInfo)//找到了
-		{
-			FCS_PushCameraEventInfo& PushInfo = PushCameraEventInfo;
-			for (int32 i = 0; i < UGameplayStatics::GetGameState(this)->PlayerArray.Num(); i++)
-			{
-				APlayerController* PC = UGameplayStatics::GetPlayerController(this, i);
-				if (PC)
-				{
-					for (FCS_CameraShakeInfo& Info : CameraEventInfo->CameraShakeInfo)
-					{
-						PushInfo = PushCameraEventInfo;
-						if (Info.CameraShakeClass)
-						{
-							if (!bIsOverridePushInfo)
-							{
-								PushInfo = Info.OverrideInfo.PushInfo;
-							}
-							PC->ClientStartCameraShake(Info.CameraShakeClass, PushInfo.Scale * CameraShakeScale, PushInfo.PlaySpace, PushInfo.UserPlaySpaceRot);
-						}
-					}
-				}
-				if (!PushInfo.bIsPushAllPlayer)
-				{
-					break;
-				}
-			}
-		}
-	}
-}
-
-void UCS_WorldSubsystem::TriggerCameraEvent(FCS_CameraEventHandle CameraEventHandle, FVector TriggerLocation, bool bIsOverrideTriggerInfo, FCS_TriggerCameraEventInfo TriggerCameraEventInfo)
+void UCS_WorldSubsystem::PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo)
 {
 	UDataTable* CameraEventInfoDataTable = UCS_Config::GetInstance()->CameraEventInfoDataTable.LoadSynchronous();
 	if (CameraEventInfoDataTable)
@@ -50,19 +16,116 @@ void UCS_WorldSubsystem::TriggerCameraEvent(FCS_CameraEventHandle CameraEventHan
 		FCS_CameraEventInfo* CameraEventInfo = CameraEventInfoDataTable->FindRow<FCS_CameraEventInfo>(CameraEventHandle.RowName, TEXT(""));
 		if (CameraEventInfo)//找到了
 		{
-			APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+			FCS_PushCameraEventInfo_Shake& PushShakeInfo = PushCameraEventInfo.PushShakeInfo;
+			FCS_PushCameraEventInfo_Post& PushPostInfo = PushCameraEventInfo.PushPostInfo;
+			for (int32 i = 0; i < UGameplayStatics::GetGameState(WorldContextObject)->PlayerArray.Num(); i++)
+			{
+				APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, i);
+				if (PC)
+				{
+					//相机抖动
+					if (PushShakeInfo.bIsPushAllPlayer || (!PushShakeInfo.bIsPushAllPlayer && i == 0))
+					{
+						for (FCS_CameraShakeInfo& Info : CameraEventInfo->CameraShakeInfo)
+						{
+							if (Info.CameraShakeClass)
+							{
+								if (!PushCameraEventInfo.bIsOverridePushShakeInfo)
+								{
+									PushShakeInfo = Info.OverrideInfo.PushInfo;
+								}
+								PC->ClientStartCameraShake(Info.CameraShakeClass, PushShakeInfo.Scale * CameraShakeScale, PushShakeInfo.PlaySpace, PushShakeInfo.UserPlaySpaceRot);
+							}
+						}
+					}
+
+					//相机后期
+					if (PushPostInfo.bIsPushAllPlayer || (!PushPostInfo.bIsPushAllPlayer && i == 0))
+					{
+						for (FCS_CameraPostInfo& Info : CameraEventInfo->CameraPostInfo)
+						{
+							if (!PushCameraEventInfo.bIsOverridePushPostInfo)
+							{
+								PushPostInfo = Info.OverrideInfo.PushInfo;
+							}
+							UCS_CameraModifier* CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
+							if (CameraModifier)
+							{
+								CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
+								CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+							}
+							else
+							{
+								if (Info.ModifierClass)
+								{
+									CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->AddNewCameraModifier(Info.ModifierClass));
+									CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
+									CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void UCS_WorldSubsystem::TriggerCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FVector TriggerLocation, FCS_TriggerCameraEventInfo TriggerCameraEventInfo)
+{
+	UDataTable* CameraEventInfoDataTable = UCS_Config::GetInstance()->CameraEventInfoDataTable.LoadSynchronous();
+	if (CameraEventInfoDataTable)
+	{
+		FCS_CameraEventInfo* CameraEventInfo = CameraEventInfoDataTable->FindRow<FCS_CameraEventInfo>(CameraEventHandle.RowName, TEXT(""));
+		if (CameraEventInfo)//找到了
+		{
+			APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0);
 			if (PC)
 			{
+				//相机抖动
+				FCS_TriggerCameraEventInfo_Shake& TriggerShakeInfo = TriggerCameraEventInfo.TriggerShakeInfo;
 				for (FCS_CameraShakeInfo& Info : CameraEventInfo->CameraShakeInfo)
 				{
 					if (Info.CameraShakeClass)
 					{
-						FCS_TriggerCameraEventInfo& TriggerInfo = TriggerCameraEventInfo;
-						if (!bIsOverrideTriggerInfo)
+						if (!TriggerCameraEventInfo.bIsOverrideTriggerShakeInfo)
 						{
-							TriggerInfo = Info.OverrideInfo.TriggerInfo;
+							TriggerShakeInfo = Info.OverrideInfo.TriggerInfo;
 						}
-						UGameplayStatics::PlayWorldCameraShake(PC, Info.CameraShakeClass, TriggerLocation, TriggerInfo.InnerRadius, TriggerInfo.OuterRadius, TriggerInfo.Falloff, TriggerInfo.bOrientShakeTowardsEpicenter);
+						UGameplayStatics::PlayWorldCameraShake(PC, Info.CameraShakeClass, TriggerLocation, TriggerShakeInfo.InnerRadius, TriggerShakeInfo.OuterRadius, TriggerShakeInfo.Falloff, TriggerShakeInfo.bOrientShakeTowardsEpicenter);
+					}
+				}
+
+				//相机后期
+				FCS_TriggerCameraEventInfo_Post TriggerPostInfo = TriggerCameraEventInfo.TriggerPostInfo;
+				for (FCS_CameraPostInfo Info : CameraEventInfo->CameraPostInfo)
+				{
+					if (!TriggerCameraEventInfo.bIsOverrideTriggerPostInfo)
+					{
+						TriggerPostInfo = Info.OverrideInfo.TriggerInfo;
+					}
+					//距离判断
+					float Distance = UKismetMathLibrary::VSize(PC->GetPawn()->GetActorLocation() - TriggerLocation);
+					float Value = ((Distance - TriggerPostInfo.InnerRadius) / TriggerPostInfo.OuterRadius);
+					//大于无视效果的距离 && 没有超出范围
+					if (Distance > TriggerPostInfo.InnerRadius && Value < 1.0f)
+					{
+						Info.OverrideInfo.PostTime.Scale *= (1.0f - Value) * TriggerPostInfo.Falloff;//越靠近中心接近1
+						UCS_CameraModifier* CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
+						if (CameraModifier)
+						{
+							CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
+							CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+						}
+						else
+						{
+							if (Info.ModifierClass)
+							{
+								CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->AddNewCameraModifier(Info.ModifierClass));
+								CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
+								CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+							}
+						}
 					}
 				}
 			}
@@ -81,6 +144,7 @@ void UCS_WorldSubsystem::PopCameraEvent(FCS_CameraEventHandle CameraEventHandle,
 			APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 			if (PC)
 			{
+				//移除抖动
 				for (FCS_CameraShakeInfo& Info : CameraEventInfo->CameraShakeInfo)
 				{
 					if (Info.CameraShakeClass)
@@ -91,6 +155,16 @@ void UCS_WorldSubsystem::PopCameraEvent(FCS_CameraEventHandle CameraEventHandle,
 							BlendOutType = Info.OverrideInfo.IsBlendOut;
 						}
 						PC->ClientStopCameraShake(Info.CameraShakeClass, BlendOutType);
+					}
+				}
+
+				//移除后期
+				for (FCS_CameraPostInfo& Info : CameraEventInfo->CameraPostInfo)
+				{
+					UCS_CameraModifier* CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
+					if (CameraModifier)
+					{
+						CameraModifier->BlendOut(CameraModifier->CameraPostTime.BlendOutTime);
 					}
 				}
 			}

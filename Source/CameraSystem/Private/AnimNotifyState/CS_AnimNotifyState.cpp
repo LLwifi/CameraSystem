@@ -14,7 +14,7 @@ void UCS_AnimNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSeq
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
-	UWorld* World = MeshComp->GetWorld();
+	World = MeshComp->GetWorld();
 #if WITH_EDITORONLY_DATA
 	if (World && World->WorldType == EWorldType::EditorPreview)
 	{
@@ -29,12 +29,12 @@ void UCS_AnimNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSeq
 			{
 			case ECS_CameraEventType::Push:
 			{
-				GetCS_WorldSubsystem()->PushCameraEvent(CameraEventHandle, OverrideInfo.bIsOverridePushInfo, OverrideInfo.PushInfo);
+				GetCS_WorldSubsystem()->PushCameraEvent(World, CameraEventHandle, FCS_PushCameraEventInfo(CameraPostOverrideInfo, CameraShakeOverrideInfo));
 				break;
 			}
 			case ECS_CameraEventType::Trigger:
 			{
-				GetCS_WorldSubsystem()->TriggerCameraEvent(CameraEventHandle, MeshComp->GetSocketLocation(AttachName) + OffsetLocation, OverrideInfo.bIsOverrideTriggerInfo, OverrideInfo.TriggerInfo);
+				GetCS_WorldSubsystem()->TriggerCameraEvent(World, CameraEventHandle, MeshComp->GetSocketLocation(AttachName) + OffsetLocation, FCS_TriggerCameraEventInfo(CameraPostOverrideInfo, CameraShakeOverrideInfo));
 				break;
 			}
 			default:
@@ -53,7 +53,7 @@ void UCS_AnimNotifyState::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSeque
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
-	UWorld* World = MeshComp->GetWorld();
+	World = MeshComp->GetWorld();
 #if WITH_EDITORONLY_DATA
 	if (World && World->WorldType == EWorldType::EditorPreview)
 	{
@@ -64,7 +64,7 @@ void UCS_AnimNotifyState::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSeque
 	{
 		if (GetCS_WorldSubsystem())
 		{
-			GetCS_WorldSubsystem()->PopCameraEvent(CameraEventHandle, OverrideInfo.bIsOverridePopInfo, OverrideInfo.IsBlendOut);
+			GetCS_WorldSubsystem()->PopCameraEvent(CameraEventHandle, CameraShakeOverrideInfo.bIsOverridePopInfo, CameraShakeOverrideInfo.IsBlendOut);
 		}
 	}
 }
@@ -73,7 +73,7 @@ UCS_WorldSubsystem* UCS_AnimNotifyState::GetCS_WorldSubsystem()
 {
 	if (!CS_WorldSubsystem)
 	{
-		CS_WorldSubsystem = Cast<UCS_WorldSubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(GWorld, UCS_WorldSubsystem::StaticClass()));
+		CS_WorldSubsystem = Cast<UCS_WorldSubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(World, UCS_WorldSubsystem::StaticClass()));
 	}
 	return CS_WorldSubsystem;
 }

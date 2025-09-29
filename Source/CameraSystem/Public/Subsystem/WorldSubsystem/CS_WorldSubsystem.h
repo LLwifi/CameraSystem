@@ -18,17 +18,19 @@ class CAMERASYSTEM_API UCS_WorldSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 	
 public:
+
 	/*推送相机事件
 	* bIsOverridePushInfo:该值为true时使用PushCameraEventInfo的信息而非RowName获取到的信息
 	*/
-	UFUNCTION(BlueprintCallable)
-	void PushCameraEvent(FCS_CameraEventHandle CameraEventHandle, bool bIsOverridePushInfo, FCS_PushCameraEventInfo PushCameraEventInfo);
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	void PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo);
+	
 	/*触发相机事件
 	* 和推送不同，触发是在世界位置的具体地点检测一个范围
 	* bIsOverrideTriggerInfo:该值为true时使用TriggerCameraEventInfo的信息而非RowName获取到的信息
 	*/
-	UFUNCTION(BlueprintCallable)
-	void TriggerCameraEvent(FCS_CameraEventHandle CameraEventHandle, FVector TriggerLocation, bool bIsOverrideTriggerInfo, FCS_TriggerCameraEventInfo TriggerCameraEventInfo);
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	void TriggerCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FVector TriggerLocation, FCS_TriggerCameraEventInfo TriggerCameraEventInfo);
 
 	/*弹出相机事件
 	* 无论是推送（push）或者触发（trigger）的相机事件都可以通过该方法弹出/停止

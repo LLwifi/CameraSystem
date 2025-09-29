@@ -28,6 +28,9 @@ public:
 
 public:
 	UPROPERTY()
+	UWorld* World;
+
+	UPROPERTY()
 	UCS_WorldSubsystem* CS_WorldSubsystem;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -36,9 +39,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ECS_CameraEventType CameraEventType = ECS_CameraEventType::Trigger;
 
-	//重载参数
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FCS_CameraShakeOverrideInfo OverrideInfo;
+	FCS_CameraShakeOverrideInfo CameraShakeOverrideInfo = FCS_CameraShakeOverrideInfo(false);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FCS_CameraPostOverrideInfo CameraPostOverrideInfo = FCS_CameraPostOverrideInfo(false);
 
 	//挂载点，通过该值计算出触发相机事件的世界位置
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditConditionHides, EditCondition = "CameraEventType == ECS_CameraEventType::Trigger"))
