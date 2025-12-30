@@ -23,7 +23,7 @@ public:
 	* bIsOverridePushInfo:该值为true时使用PushCameraEventInfo的信息而非RowName获取到的信息
 	*/
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
-	void PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo);
+	void PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo, APlayerController* TriggerPlayerController);
 	
 	/*触发相机事件
 	* 和推送不同，触发是在世界位置的具体地点检测一个范围

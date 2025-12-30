@@ -134,7 +134,7 @@ public:
 	float InnerRadius = 0.0f;
 	//在InnerRadius之外在此之中的相机会受到效果影响
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float OuterRadius = 0.0f;
+	float OuterRadius = 150.0f;
 	//靠近OuterRadius的效果衰减
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float Falloff = 1.0f;
@@ -162,19 +162,19 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (PinHiddenByDefault, InlineEditConditionToggle))
 	bool bIsOverridePopInfo = true;
 	//在弹出相机事件时，是否需要从当前相机的位置平滑位移到默认位置
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditConditionHides, EditCondition = "bIsOverridePopInfo"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverridePopInfo"))
 	bool IsBlendOut = true;
 
 	//是否要重载 推送 参数
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (PinHiddenByDefault, InlineEditConditionToggle))
 	bool bIsOverridePushInfo = true;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditConditionHides, EditCondition = "bIsOverridePushInfo"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverridePushInfo"))
 	FCS_PushCameraEventInfo_Shake PushInfo;
 
 	//是否要重载 触发 参数
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (PinHiddenByDefault, InlineEditConditionToggle))
 	bool bIsOverrideTriggerInfo = true;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditConditionHides, EditCondition = "bIsOverrideTriggerInfo"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverrideTriggerInfo"))
 	FCS_TriggerCameraEventInfo_Shake TriggerInfo;
 };
 
@@ -240,14 +240,14 @@ public:
 	}
 public:
 	//是否要重载 后期 参数
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (PinHiddenByDefault, InlineEditConditionToggle))
-	bool bIsOverridePushPostInfo = true;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (InlineEditConditionToggle))
+	bool bIsOverridePushPostInfo = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverridePushPostInfo"))
 	FCS_PushCameraEventInfo_Post PushPostInfo;
 
 	//是否要重载 抖动 参数
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (PinHiddenByDefault, InlineEditConditionToggle))
-	bool bIsOverridePushShakeInfo = true;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (InlineEditConditionToggle))
+	bool bIsOverridePushShakeInfo = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverridePushShakeInfo"))
 	FCS_PushCameraEventInfo_Shake PushShakeInfo;
 };
@@ -267,23 +267,24 @@ public:
 		bIsOverrideTriggerShakeInfo = _bIsOverrideTriggerShakeInfo;
 		TriggerShakeInfo = _TriggerShakeInfo;
 	}
-	FCS_TriggerCameraEventInfo(FCS_CameraPostOverrideInfo CameraPostOverrideInfo, FCS_CameraShakeOverrideInfo CameraShakeOverrideInfo)
+	FCS_TriggerCameraEventInfo(FCS_CameraShakeOverrideInfo CameraShakeOverrideInfo, FCS_CameraPostOverrideInfo CameraPostOverrideInfo)
 	{
-		bIsOverrideTriggerPostInfo = CameraPostOverrideInfo.bIsOverrideTriggerInfo;
-		TriggerPostInfo = CameraPostOverrideInfo.TriggerInfo;
 		bIsOverrideTriggerShakeInfo = CameraShakeOverrideInfo.bIsOverrideTriggerInfo;
 		TriggerShakeInfo = CameraShakeOverrideInfo.TriggerInfo;
+
+		bIsOverrideTriggerPostInfo = CameraPostOverrideInfo.bIsOverrideTriggerInfo;
+		TriggerPostInfo = CameraPostOverrideInfo.TriggerInfo;
 	}
 public:
 	//是否要重载 抖动 参数
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (PinHiddenByDefault, InlineEditConditionToggle))
-	bool bIsOverrideTriggerShakeInfo = true;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bIsOverrideTriggerShakeInfo = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverrideTriggerShakeInfo"))
 	FCS_TriggerCameraEventInfo_Shake TriggerShakeInfo;
 
 	//是否要重载 后期 参数
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (PinHiddenByDefault, InlineEditConditionToggle))
-	bool bIsOverrideTriggerPostInfo = true;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bIsOverrideTriggerPostInfo = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverrideTriggerPostInfo"))
 	FCS_TriggerCameraEventInfo_Post TriggerPostInfo;
 };

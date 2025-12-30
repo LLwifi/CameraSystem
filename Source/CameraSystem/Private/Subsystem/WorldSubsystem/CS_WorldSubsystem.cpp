@@ -8,7 +8,7 @@
 #include "CameraModifier/CS_CameraModifier.h"
 #include "Kismet/KismetMathLibrary.h"
 
-void UCS_WorldSubsystem::PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo)
+void UCS_WorldSubsystem::PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo, APlayerController* TriggerPlayerController)
 {
 	UDataTable* CameraEventInfoDataTable = UCS_Config::GetInstance()->CameraEventInfoDataTable.LoadSynchronous();
 	if (CameraEventInfoDataTable)
@@ -18,50 +18,48 @@ void UCS_WorldSubsystem::PushCameraEvent(const UObject* WorldContextObject, FCS_
 		{
 			FCS_PushCameraEventInfo_Shake& PushShakeInfo = PushCameraEventInfo.PushShakeInfo;
 			FCS_PushCameraEventInfo_Post& PushPostInfo = PushCameraEventInfo.PushPostInfo;
-			for (int32 i = 0; i < UGameplayStatics::GetGameState(WorldContextObject)->PlayerArray.Num(); i++)
+
+			APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0);//拿本地端的PC
+			if (PC && TriggerPlayerController)
 			{
-				APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, i);
-				if (PC)
+				//相机抖动
+				for (FCS_CameraShakeInfo& Info : CameraEventInfo->CameraShakeInfo)
 				{
-					//相机抖动
-					if (PushShakeInfo.bIsPushAllPlayer || (!PushShakeInfo.bIsPushAllPlayer && i == 0))
+					if (Info.CameraShakeClass)
 					{
-						for (FCS_CameraShakeInfo& Info : CameraEventInfo->CameraShakeInfo)
+						if (!PushCameraEventInfo.bIsOverridePushShakeInfo)
 						{
-							if (Info.CameraShakeClass)
-							{
-								if (!PushCameraEventInfo.bIsOverridePushShakeInfo)
-								{
-									PushShakeInfo = Info.OverrideInfo.PushInfo;
-								}
-								PC->ClientStartCameraShake(Info.CameraShakeClass, PushShakeInfo.Scale * CameraShakeScale, PushShakeInfo.PlaySpace, PushShakeInfo.UserPlaySpaceRot);
-							}
+							PushShakeInfo = Info.OverrideInfo.PushInfo;
+						}
+						if (PushShakeInfo.bIsPushAllPlayer || PC == TriggerPlayerController)//配置为全部播放 || 本地端是触发的PC
+						{
+							PC->ClientStartCameraShake(Info.CameraShakeClass, PushShakeInfo.Scale * CameraShakeScale, PushShakeInfo.PlaySpace, PushShakeInfo.UserPlaySpaceRot);
 						}
 					}
+				}
 
-					//相机后期
-					if (PushPostInfo.bIsPushAllPlayer || (!PushPostInfo.bIsPushAllPlayer && i == 0))
+				//相机后期
+				for (FCS_CameraPostInfo& Info : CameraEventInfo->CameraPostInfo)
+				{
+					if (!PushCameraEventInfo.bIsOverridePushPostInfo)
 					{
-						for (FCS_CameraPostInfo& Info : CameraEventInfo->CameraPostInfo)
+						PushPostInfo = Info.OverrideInfo.PushInfo;
+					}
+					if (PushPostInfo.bIsPushAllPlayer || PC == TriggerPlayerController)
+					{
+						UCS_CameraModifier* CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
+						if (CameraModifier)
 						{
-							if (!PushCameraEventInfo.bIsOverridePushPostInfo)
+							CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
+							CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+						}
+						else
+						{
+							if (Info.ModifierClass)
 							{
-								PushPostInfo = Info.OverrideInfo.PushInfo;
-							}
-							UCS_CameraModifier* CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
-							if (CameraModifier)
-							{
+								CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->AddNewCameraModifier(Info.ModifierClass));
 								CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
 								CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
-							}
-							else
-							{
-								if (Info.ModifierClass)
-								{
-									CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->AddNewCameraModifier(Info.ModifierClass));
-									CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
-									CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
-								}
 							}
 						}
 					}

@@ -25,16 +25,23 @@ void UCS_AnimNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSeq
 	{
 		if (GetCS_WorldSubsystem())
 		{
+			APlayerController* PC = nullptr;
+			APawn* Pawn = Cast<APawn>(MeshComp->GetOwner());
+			if (Pawn)
+			{
+				PC = Cast<APlayerController>(Pawn->GetController());
+			}
+
 			switch (CameraEventType)
 			{
 			case ECS_CameraEventType::Push:
 			{
-				GetCS_WorldSubsystem()->PushCameraEvent(World, CameraEventHandle, FCS_PushCameraEventInfo(CameraPostOverrideInfo, CameraShakeOverrideInfo));
+				GetCS_WorldSubsystem()->PushCameraEvent(World, CameraEventHandle, FCS_PushCameraEventInfo(CameraPostOverrideInfo, CameraShakeOverrideInfo), PC);
 				break;
 			}
 			case ECS_CameraEventType::Trigger:
 			{
-				GetCS_WorldSubsystem()->TriggerCameraEvent(World, CameraEventHandle, MeshComp->GetSocketLocation(AttachName) + OffsetLocation, FCS_TriggerCameraEventInfo(CameraPostOverrideInfo, CameraShakeOverrideInfo));
+				GetCS_WorldSubsystem()->TriggerCameraEvent(World, CameraEventHandle, MeshComp->GetSocketLocation(AttachName) + OffsetLocation, FCS_TriggerCameraEventInfo(CameraShakeOverrideInfo, CameraPostOverrideInfo));
 				break;
 			}
 			default:
