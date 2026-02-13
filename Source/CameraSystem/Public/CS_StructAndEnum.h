@@ -8,7 +8,7 @@
 class UCameraShakeBase;
 class UCS_CameraModifier;
 
-//声音资源的类型
+//相机事件的类型
 UENUM(BlueprintType)
 enum class ECS_CameraEventType : uint8
 {
@@ -16,7 +16,7 @@ enum class ECS_CameraEventType : uint8
 	Trigger UMETA(DisplayName = "触发一个摄像机事件-3D")
 };
 
-/*推送相机事件的后期信息
+/*推送2D相机事件的后期信息
 */
 USTRUCT(BlueprintType)
 struct FCS_PushCameraEventInfo_Post
@@ -28,7 +28,7 @@ public:
 	bool bIsPushAllPlayer = false;
 };
 
-/*触发相机事件的后期信息
+/*触发3D相机事件的后期信息
 */
 USTRUCT(BlueprintType)
 struct FCS_TriggerCameraEventInfo_Post
@@ -244,6 +244,11 @@ public:
 	bool bIsOverridePushPostInfo = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverridePushPostInfo"))
 	FCS_PushCameraEventInfo_Post PushPostInfo;
+	//是否要重载 后期 时间参数
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (InlineEditConditionToggle))
+	bool bIsOverridePushPostTimeInfo = false;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bIsOverridePushPostTimeInfo"))
+	FCS_CameraPostTime CameraPostTime;
 
 	//是否要重载 抖动 参数
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (InlineEditConditionToggle))

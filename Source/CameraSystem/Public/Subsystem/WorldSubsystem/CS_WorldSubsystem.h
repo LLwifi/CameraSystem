@@ -23,14 +23,14 @@ public:
 	* bIsOverridePushInfo:该值为true时使用PushCameraEventInfo的信息而非RowName获取到的信息
 	*/
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
-	void PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo, APlayerController* TriggerPlayerController);
+	void PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo, APlayerController* TriggerPlayerController, UCS_CameraModifier*& CameraModifier_Post, UCameraShakeBase*& CameraShake);
 	
 	/*触发相机事件
 	* 和推送不同，触发是在世界位置的具体地点检测一个范围
 	* bIsOverrideTriggerInfo:该值为true时使用TriggerCameraEventInfo的信息而非RowName获取到的信息
 	*/
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
-	void TriggerCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FVector TriggerLocation, FCS_TriggerCameraEventInfo TriggerCameraEventInfo);
+	void TriggerCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FVector TriggerLocation, FCS_TriggerCameraEventInfo TriggerCameraEventInfo, UCS_CameraModifier*& CameraModifier_Post);
 
 	/*弹出相机事件
 	* 无论是推送（push）或者触发（trigger）的相机事件都可以通过该方法弹出/停止

@@ -32,16 +32,18 @@ void UCS_AnimNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSeq
 				PC = Cast<APlayerController>(Pawn->GetController());
 			}
 
+			UCS_CameraModifier* CameraModifier_Post;
+			UCameraShakeBase* CameraShake;
 			switch (CameraEventType)
 			{
 			case ECS_CameraEventType::Push:
 			{
-				GetCS_WorldSubsystem()->PushCameraEvent(World, CameraEventHandle, FCS_PushCameraEventInfo(CameraPostOverrideInfo, CameraShakeOverrideInfo), PC);
+				GetCS_WorldSubsystem()->PushCameraEvent(World, CameraEventHandle, FCS_PushCameraEventInfo(CameraPostOverrideInfo, CameraShakeOverrideInfo), PC, CameraModifier_Post, CameraShake);
 				break;
 			}
 			case ECS_CameraEventType::Trigger:
 			{
-				GetCS_WorldSubsystem()->TriggerCameraEvent(World, CameraEventHandle, MeshComp->GetSocketLocation(AttachName) + OffsetLocation, FCS_TriggerCameraEventInfo(CameraShakeOverrideInfo, CameraPostOverrideInfo));
+				GetCS_WorldSubsystem()->TriggerCameraEvent(World, CameraEventHandle, MeshComp->GetSocketLocation(AttachName) + OffsetLocation, FCS_TriggerCameraEventInfo(CameraShakeOverrideInfo, CameraPostOverrideInfo), CameraModifier_Post);
 				break;
 			}
 			default:

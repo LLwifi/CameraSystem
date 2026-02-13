@@ -8,7 +8,7 @@
 #include "CameraModifier/CS_CameraModifier.h"
 #include "Kismet/KismetMathLibrary.h"
 
-void UCS_WorldSubsystem::PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo, APlayerController* TriggerPlayerController)
+void UCS_WorldSubsystem::PushCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FCS_PushCameraEventInfo PushCameraEventInfo, APlayerController* TriggerPlayerController, UCS_CameraModifier*& CameraModifier_Post, UCameraShakeBase*& CameraShake)
 {
 	UDataTable* CameraEventInfoDataTable = UCS_Config::GetInstance()->CameraEventInfoDataTable.LoadSynchronous();
 	if (CameraEventInfoDataTable)
@@ -33,33 +33,39 @@ void UCS_WorldSubsystem::PushCameraEvent(const UObject* WorldContextObject, FCS_
 						}
 						if (PushShakeInfo.bIsPushAllPlayer || PC == TriggerPlayerController)//配置为全部播放 || 本地端是触发的PC
 						{
-							PC->ClientStartCameraShake(Info.CameraShakeClass, PushShakeInfo.Scale * CameraShakeScale, PushShakeInfo.PlaySpace, PushShakeInfo.UserPlaySpaceRot);
+							CameraShake = PC->PlayerCameraManager->StartCameraShake(Info.CameraShakeClass, PushShakeInfo.Scale * CameraShakeScale, PushShakeInfo.PlaySpace, PushShakeInfo.UserPlaySpaceRot);
+							//PC->ClientStartCameraShake(Info.CameraShakeClass, PushShakeInfo.Scale * CameraShakeScale, PushShakeInfo.PlaySpace, PushShakeInfo.UserPlaySpaceRot);
 						}
 					}
 				}
 
 				//相机后期
+				FCS_CameraPostTime CameraPostTime = PushCameraEventInfo.CameraPostTime;//外部传递的参数
 				for (FCS_CameraPostInfo& Info : CameraEventInfo->CameraPostInfo)
 				{
 					if (!PushCameraEventInfo.bIsOverridePushPostInfo)
 					{
 						PushPostInfo = Info.OverrideInfo.PushInfo;
 					}
+					if (!PushCameraEventInfo.bIsOverridePushPostTimeInfo)
+					{
+						CameraPostTime = Info.OverrideInfo.PostTime;//表配置的参数
+					}
 					if (PushPostInfo.bIsPushAllPlayer || PC == TriggerPlayerController)
 					{
-						UCS_CameraModifier* CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
-						if (CameraModifier)
+						CameraModifier_Post = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
+						if (CameraModifier_Post)
 						{
-							CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
-							CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+							CameraModifier_Post->SetPostProcessSettings(Info.PostProcessSettings);
+							CameraModifier_Post->SetCameraPostTime(CameraPostTime);
 						}
 						else
 						{
 							if (Info.ModifierClass)
 							{
-								CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->AddNewCameraModifier(Info.ModifierClass));
-								CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
-								CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+								CameraModifier_Post = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->AddNewCameraModifier(Info.ModifierClass));
+								CameraModifier_Post->SetPostProcessSettings(Info.PostProcessSettings);
+								CameraModifier_Post->SetCameraPostTime(CameraPostTime);
 							}
 						}
 					}
@@ -69,7 +75,7 @@ void UCS_WorldSubsystem::PushCameraEvent(const UObject* WorldContextObject, FCS_
 	}
 }
 
-void UCS_WorldSubsystem::TriggerCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FVector TriggerLocation, FCS_TriggerCameraEventInfo TriggerCameraEventInfo)
+void UCS_WorldSubsystem::TriggerCameraEvent(const UObject* WorldContextObject, FCS_CameraEventHandle CameraEventHandle, FVector TriggerLocation, FCS_TriggerCameraEventInfo TriggerCameraEventInfo, UCS_CameraModifier*& CameraModifier_Post)
 {
 	UDataTable* CameraEventInfoDataTable = UCS_Config::GetInstance()->CameraEventInfoDataTable.LoadSynchronous();
 	if (CameraEventInfoDataTable)
@@ -109,19 +115,19 @@ void UCS_WorldSubsystem::TriggerCameraEvent(const UObject* WorldContextObject, F
 					if (Distance > TriggerPostInfo.InnerRadius && Value < 1.0f)
 					{
 						Info.OverrideInfo.PostTime.Scale *= (1.0f - Value) * TriggerPostInfo.Falloff;//越靠近中心接近1
-						UCS_CameraModifier* CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
-						if (CameraModifier)
+						CameraModifier_Post = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->FindCameraModifierByClass(Info.ModifierClass));
+						if (CameraModifier_Post)
 						{
-							CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
-							CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+							CameraModifier_Post->SetPostProcessSettings(Info.PostProcessSettings);
+							CameraModifier_Post->SetCameraPostTime(Info.OverrideInfo.PostTime);
 						}
 						else
 						{
 							if (Info.ModifierClass)
 							{
-								CameraModifier = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->AddNewCameraModifier(Info.ModifierClass));
-								CameraModifier->SetPostProcessSettings(Info.PostProcessSettings);
-								CameraModifier->SetCameraPostTime(Info.OverrideInfo.PostTime);
+								CameraModifier_Post = Cast<UCS_CameraModifier>(PC->PlayerCameraManager->AddNewCameraModifier(Info.ModifierClass));
+								CameraModifier_Post->SetPostProcessSettings(Info.PostProcessSettings);
+								CameraModifier_Post->SetCameraPostTime(Info.OverrideInfo.PostTime);
 							}
 						}
 					}
