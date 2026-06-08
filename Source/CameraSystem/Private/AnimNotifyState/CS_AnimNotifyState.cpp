@@ -32,8 +32,8 @@ void UCS_AnimNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSeq
 				PC = Cast<APlayerController>(Pawn->GetController());
 			}
 
-			UCS_CameraModifier* CameraModifier_Post;
-			UCameraShakeBase* CameraShake;
+			TArray<UCS_CameraModifier*> CameraModifier_Post;
+			TArray<UCameraShakeBase*> CameraShake;
 			switch (CameraEventType)
 			{
 			case ECS_CameraEventType::Push:
